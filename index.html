@@ -3,13 +3,64 @@
   <head>
     <meta charset="utf-8">
     <title>Wheel</title>
+    <style>
+      .hero {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+        padding: 4rem 1rem;
+        text-align: center;
+      }
+      .hero h1 {
+        margin: 0;
+        font-size: clamp(2rem, 6vw, 4rem);
+      }
+      .hero button {
+        font: inherit;
+        padding: 0.5rem 1rem;
+        border: 1px solid #666;
+        background: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+    </style>
   </head>
   <body>
+    <main class="hero">
+      <h1 id="greeting">Hello world</h1>
+      <button id="lang-toggle" type="button">Latviski</button>
+    </main>
     <footer style="text-align: center; font-size: 0.85rem; color: #666; padding: 1rem;">
       &copy; 2026 Elgars Logins &middot;
       <a href="https://github.com/elglogins/briefly-wheel-demo">briefly-wheel-demo</a>
       <br>
       Made with &#10084; in Aarhus, Denmark
     </footer>
+    <script>
+      (function () {
+        var GREETINGS = { en: "Hello world", lv: "Sveiks!" };
+        var TOGGLE_LABEL = { en: "Latviski", lv: "English" };
+        var STORAGE_KEY = "wheel.lang";
+        var greeting = document.getElementById("greeting");
+        var toggle = document.getElementById("lang-toggle");
+
+        function apply(lang) {
+          if (!GREETINGS[lang]) lang = "en";
+          document.documentElement.lang = lang;
+          greeting.textContent = GREETINGS[lang];
+          toggle.textContent = TOGGLE_LABEL[lang];
+          try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) {}
+        }
+
+        var initial = "en";
+        try { initial = localStorage.getItem(STORAGE_KEY) || "en"; } catch (e) {}
+        apply(initial);
+
+        toggle.addEventListener("click", function () {
+          apply(document.documentElement.lang === "en" ? "lv" : "en");
+        });
+      })();
+    </script>
   </body>
 </html>
