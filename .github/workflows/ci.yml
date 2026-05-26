@@ -1,0 +1,29 @@
+name: ci
+
+# Minimal Checks-API workflow so Briefly's M3 `check_suite.completed`
+# webhook trigger can fire. CodeRabbit + the legacy commit-status API
+# don't produce check_suite events; a GitHub Actions workflow does.
+#
+# Validates the single static HTML page parses cleanly (no syntax/charset
+# weirdness from `briefly/sc-<id>` impl branches).
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  html-sanity:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify index.html is valid UTF-8 and well-formed
+        run: |
+          set -eo pipefail
+          test -f index.html
+          iconv -f utf-8 -t utf-8 index.html > /dev/null
+          # Basic balance check: every <html> has a </html>, every <body> has </body>.
+          test "$(grep -c '<html' index.html)" -eq "$(grep -c '</html>' index.html)"
+          test "$(grep -c '<body' index.html)" -eq "$(grep -c '</body>' index.html)"
+          echo "ok"
