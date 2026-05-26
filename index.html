@@ -24,6 +24,30 @@
         border-radius: 4px;
         cursor: pointer;
       }
+      #back-to-top {
+        position: fixed;
+        bottom: 1.25rem;
+        right: 1.25rem;
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        border: 1px solid #666;
+        background: #fff;
+        cursor: pointer;
+        font: inherit;
+        font-size: 1.25rem;
+        line-height: 1;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+        opacity: 0;
+        transform: translateY(8px);
+        pointer-events: none;
+        transition: opacity 0.2s ease, transform 0.2s ease;
+      }
+      #back-to-top.is-visible {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
     </style>
   </head>
   <body>
@@ -37,6 +61,7 @@
       <br>
       Made with &#10084; in Aarhus, Denmark
     </footer>
+    <button id="back-to-top" type="button" aria-label="Back to top" aria-hidden="true" tabindex="-1">&uarr;</button>
     <script>
       (function () {
         var GREETINGS = { en: "Hello world", lv: "Sveiks!" };
@@ -59,6 +84,37 @@
 
         toggle.addEventListener("click", function () {
           apply(document.documentElement.lang === "en" ? "lv" : "en");
+        });
+
+        var backToTop = document.getElementById("back-to-top");
+        var ticking = false;
+        var visible = false;
+
+        function updateVisibility() {
+          var shouldShow = window.scrollY > 200;
+          if (shouldShow !== visible) {
+            visible = shouldShow;
+            backToTop.classList.toggle("is-visible", visible);
+            if (visible) {
+              backToTop.removeAttribute("aria-hidden");
+              backToTop.removeAttribute("tabindex");
+            } else {
+              backToTop.setAttribute("aria-hidden", "true");
+              backToTop.setAttribute("tabindex", "-1");
+            }
+          }
+          ticking = false;
+        }
+
+        window.addEventListener("scroll", function () {
+          if (!ticking) {
+            window.requestAnimationFrame(updateVisibility);
+            ticking = true;
+          }
+        });
+
+        backToTop.addEventListener("click", function () {
+          window.scrollTo({ top: 0, behavior: "smooth" });
         });
       })();
     </script>
