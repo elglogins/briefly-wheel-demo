@@ -48,12 +48,40 @@
         transform: translateY(0);
         pointer-events: auto;
       }
+      .wheel {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+      }
+      .wheel button {
+        font: inherit;
+        padding: 0.5rem 1.5rem;
+        border: 1px solid #666;
+        background: #fff;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .wheel button:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+      #wheel-result {
+        margin: 0;
+        min-height: 1.5rem;
+        font-weight: bold;
+      }
     </style>
   </head>
   <body>
     <main class="hero">
       <h1 id="greeting">Hello world</h1>
       <button id="lang-toggle" type="button">Latviski</button>
+      <section class="wheel" aria-label="Spin the wheel">
+        <canvas id="wheel-canvas" width="300" height="300" role="img" aria-label="Prize wheel"></canvas>
+        <button id="spin-button" type="button">Spin</button>
+        <p id="wheel-result" role="status" aria-live="polite"></p>
+      </section>
     </main>
     <footer style="text-align: center; font-size: 0.85rem; color: #666; padding: 1rem;">
       &copy; 2026 Elgars Logins &middot;
@@ -119,6 +147,101 @@
         backToTop.addEventListener("click", function () {
           window.scrollTo({ top: 0, behavior: "smooth" });
         });
+      })();
+
+      (function () {
+        var SEGMENTS = [1, 2, 3, 4, 5, 6];
+        var COLORS = ["#e6194b", "#3cb44b", "#4363d8", "#f58231", "#911eb4", "#46c2cb"];
+        var EXTRA_SPINS = 5;
+        var DURATION = 4000;
+        var TWO_PI = Math.PI * 2;
+        var POINTER_ANGLE = TWO_PI * 0.75; // top of the wheel (12 o'clock)
+
+        var canvas = document.getElementById("wheel-canvas");
+        var spinButton = document.getElementById("spin-button");
+        var result = document.getElementById("wheel-result");
+        var ctx = canvas.getContext("2d");
+
+        var size = canvas.width;
+        var cx = size / 2;
+        var cy = size / 2;
+        var radius = cx - 4;
+        var seg = TWO_PI / SEGMENTS.length;
+        var rotation = 0;
+        var spinning = false;
+
+        function draw(angle) {
+          ctx.clearRect(0, 0, size, size);
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(angle);
+          for (var i = 0; i < SEGMENTS.length; i++) {
+            var start = i * seg;
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.arc(0, 0, radius, start, start + seg);
+            ctx.closePath();
+            ctx.fillStyle = COLORS[i % COLORS.length];
+            ctx.fill();
+            ctx.save();
+            ctx.rotate(start + seg / 2);
+            ctx.fillStyle = "#fff";
+            ctx.font = "bold 18px sans-serif";
+            ctx.textAlign = "right";
+            ctx.textBaseline = "middle";
+            ctx.fillText(String(SEGMENTS[i]), radius - 14, 0);
+            ctx.restore();
+          }
+          ctx.restore();
+          // fixed pointer at the top, pointing down into the wheel
+          ctx.beginPath();
+          ctx.moveTo(cx - 10, 2);
+          ctx.lineTo(cx + 10, 2);
+          ctx.lineTo(cx, 22);
+          ctx.closePath();
+          ctx.fillStyle = "#222";
+          ctx.fill();
+        }
+
+        function easeOut(p) {
+          return 1 - Math.pow(1 - p, 3);
+        }
+
+        function spin() {
+          if (spinning) return;
+          spinning = true;
+          spinButton.disabled = true;
+          result.textContent = "";
+
+          var target = Math.floor(Math.random() * SEGMENTS.length);
+          // angle that puts the centre of the target segment under the pointer
+          var desired = ((POINTER_ANGLE - (target + 0.5) * seg) % TWO_PI + TWO_PI) % TWO_PI;
+          var currentMod = ((rotation % TWO_PI) + TWO_PI) % TWO_PI;
+          var delta = ((desired - currentMod) % TWO_PI + TWO_PI) % TWO_PI;
+          var from = rotation;
+          var to = rotation + EXTRA_SPINS * TWO_PI + delta;
+          var startTime = null;
+
+          function step(now) {
+            if (startTime === null) startTime = now;
+            var p = Math.min((now - startTime) / DURATION, 1);
+            rotation = from + (to - from) * easeOut(p);
+            draw(rotation);
+            if (p < 1) {
+              window.requestAnimationFrame(step);
+            } else {
+              rotation = to;
+              spinning = false;
+              spinButton.disabled = false;
+              result.textContent = "Winner: " + SEGMENTS[target];
+            }
+          }
+
+          window.requestAnimationFrame(step);
+        }
+
+        draw(rotation);
+        spinButton.addEventListener("click", spin);
       })();
     </script>
   </body>
