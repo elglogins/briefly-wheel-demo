@@ -127,6 +127,7 @@
       <section class="wheel" aria-label="Spin the wheel">
         <canvas id="wheel-canvas" width="300" height="300" role="img" aria-label="Prize wheel"></canvas>
         <button id="spin-button" type="button">Spin</button>
+        <span id="reset-wrapper"><button id="reset-button" type="button">Reset</button></span>
         <p id="wheel-result" role="status" aria-live="polite"></p>
       </section>
     </main>
@@ -232,8 +233,11 @@
 
         var canvas = document.getElementById("wheel-canvas");
         var spinButton = document.getElementById("spin-button");
+        var resetButton = document.getElementById("reset-button");
+        var resetWrapper = document.getElementById("reset-wrapper");
         var result = document.getElementById("wheel-result");
         var ctx = canvas.getContext("2d");
+        var SPINNING_TOOLTIP = "Spinning… Reset is available when the wheel stops";
 
         var size = canvas.width;
         var cx = size / 2;
@@ -284,6 +288,8 @@
           if (spinning) return;
           spinning = true;
           spinButton.disabled = true;
+          resetButton.disabled = true;
+          resetWrapper.title = SPINNING_TOOLTIP;
           result.textContent = "";
 
           var target = Math.floor(Math.random() * SEGMENTS.length);
@@ -306,6 +312,8 @@
               rotation = to;
               spinning = false;
               spinButton.disabled = false;
+              resetButton.disabled = false;
+              resetWrapper.removeAttribute("title");
               result.textContent = "Winner: " + SEGMENTS[target];
             }
           }
@@ -313,8 +321,15 @@
           window.requestAnimationFrame(step);
         }
 
+        function reset() {
+          // Reset is only clickable when idle, so no in-flight animation to cancel.
+          result.textContent = "";
+          spinButton.disabled = false;
+        }
+
         draw(rotation);
         spinButton.addEventListener("click", spin);
+        resetButton.addEventListener("click", reset);
       })();
     </script>
   </body>
